@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="PetuPong: ping pong contra Petunia, la máquina que casi nunca pierde. ¿Quién ganará?">
+  <title>PetuPong</title>
+
+  <!-- Fuente tipo arcade (si no hay internet, usa una monoespaciada) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <!-- Hoja de estilos externa -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="encabezado">
+    <h1 class="titulo">PetuPong</h1>
+    <p class="subtitulo">Tú contra la máquina alias "Petunia". Casi nunca pierde, ¿quién ganará? Tienes 5 intentos. </p>
+  </header>
+
+  <main class="juego">
+
+    <section class="marcador" aria-label="Marcador">
+      <div class="marcador__lado">
+        <p class="marcador__nombre" id="etiquetaJugador">Mis Puntos</p>
+        <p class="marcador__numero marcador__numero--jugador" id="puntosJugador">0</p>
+      </div>
+
+      <div class="marcador__intentos">
+        <p class="marcador__nombre" id="etiquetaCentro">Intentos</p>
+        <ul class="vidas" id="listaVidas" aria-hidden="true">
+          <li class="vida"></li>
+          <li class="vida"></li>
+          <li class="vida"></li>
+          <li class="vida"></li>
+          <li class="vida"></li>
+        </ul>
+        <span class="solo-lector" id="intentosTexto">5 intentos restantes</span>
+        <button class="boton-sonido boton-menu" id="botonMenu" type="button" aria-haspopup="dialog" hidden>☰ Menú</button>
+        <button class="boton-sonido" id="botonSonido" type="button" aria-pressed="true">🔊 Sonido: sí</button>
+        <button class="boton-sonido" id="botonPantalla" type="button" aria-pressed="false" hidden>⤢ Pantalla completa</button>
+      </div>
+
+      <div class="marcador__lado">
+        <p class="marcador__nombre" id="etiquetaMaquina">Petunia la pro </p>
+        <p class="marcador__numero marcador__numero--maquina" id="puntosMaquina">0</p>
+      </div>
+    </section>
+
+    <div class="cancha">
+      <canvas id="cancha" width="1000" height="500" tabindex="0" role="img"
+              aria-label="Cancha de juego (baloncesto, fútbol o hockey de mesa) con graderías a cada lado. La paleta de la izquierda es del jugador 1 y la de la derecha es de Petunia o del jugador 2.">
+        Tu navegador no soporta canvas.
+      </canvas>
+
+      <!-- Gato de fiesta que aparece cuando le haces punto a Petunia -->
+      <img class="festejo" id="festejo" src="img/gato-fiesta.webp" alt="" width="300" height="344" hidden>
+
+      <!-- Gato burlándose cuando Petunia te hace punto -->
+      <img class="festejo festejo--burla" id="burla" src="img/gato-risa.webp" alt="" width="600" height="595" hidden>
+    </div>
+
+    <!-- Ventana de inicio y de fin del juego (queda encima de toda la página) -->
+    <div class="pantalla" id="pantalla" role="dialog" aria-modal="true" aria-labelledby="pantallaTitulo">
+      <div class="pantalla__tarjeta">
+        <img class="pantalla__imagen" id="imagenFinal" src="img/gato-risa.webp"
+             alt="Gato riéndose y señalándote" width="600" height="595" hidden>
+
+        <div class="pantalla__contenido">
+          <h2 class="pantalla__titulo" id="pantallaTitulo">¿Listo para jugar?</h2>
+          <p class="pantalla__texto" id="pantallaTexto">Elige el modo, la cancha y el nivel. Contra Petunia la partida termina cuando ella llega a 5 puntos: si al final tienes más puntos, ganas tú. En 2 jugadores gana el primero que llegue a 5.</p>
+
+          <form class="formulario" id="formulario">
+            <fieldset class="opciones">
+              <legend class="opciones__titulo">Modo de juego</legend>
+              <label class="opcion">
+                <input type="radio" name="modo" value="uno" checked>
+                Contra Petunia
+              </label>
+              <label class="opcion">
+                <input type="radio" name="modo" value="dos">
+                2 jugadores
+              </label>
+            </fieldset>
+
+            <div class="campo">
+              <label class="campo__etiqueta" for="nombre" id="etiquetaNombre1">Tu usuario</label>
+              <input class="campo__entrada" id="nombre" name="nombre" type="text"
+                     required minlength="2" maxlength="12" pattern=".*\S.*"
+                     autocomplete="nickname" placeholder="Ej: claudi_23"
+                     aria-describedby="ayudaNombre">
+              <p class="campo__ayuda" id="ayudaNombre">Entre 2 y 12 caracteres.</p>
+            </div>
+
+            <!-- Solo aparece en el modo de 2 jugadores -->
+            <div class="campo" id="campoJugador2" hidden>
+              <label class="campo__etiqueta" for="nombre2">Usuario jugador 2 (derecha)</label>
+              <input class="campo__entrada" id="nombre2" name="nombre2" type="text"
+                     required minlength="2" maxlength="12" pattern=".*\S.*"
+                     autocomplete="off" placeholder="Ej: el_primo" disabled
+                     aria-describedby="ayudaNombre2">
+              <p class="campo__ayuda" id="ayudaNombre2">Juega con ↑ ↓ o tocando su lado de la cancha.</p>
+            </div>
+
+            <fieldset class="opciones">
+              <legend class="opciones__titulo">Cancha</legend>
+              <label class="opcion">
+                <input type="radio" name="cancha" value="baloncesto" checked>
+                <span aria-hidden="true">🏀</span> Baloncesto
+              </label>
+              <label class="opcion">
+                <input type="radio" name="cancha" value="futbol">
+                <span aria-hidden="true">⚽</span> Fútbol
+              </label>
+              <label class="opcion">
+                <input type="radio" name="cancha" value="hockey">
+                <span aria-hidden="true">🏒</span> Hockey de mesa
+              </label>
+            </fieldset>
+
+            <fieldset class="opciones">
+              <legend class="opciones__titulo">Nivel</legend>
+              <label class="opcion">
+                <input type="radio" name="nivel" value="facil" checked>
+                Fácil
+              </label>
+              <label class="opcion">
+                <input type="radio" name="nivel" value="dificil">
+                Difícil
+              </label>
+            </fieldset>
+
+            <button class="boton" id="botonJugar" type="submit">Comenzar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menú de pausa: aparece con el botón "Menú", con Esc o con la tecla P -->
+    <div class="pantalla" id="menu" role="dialog" aria-modal="true" aria-labelledby="menuTitulo" hidden>
+      <div class="pantalla__tarjeta menu">
+        <h2 class="pantalla__titulo" id="menuTitulo">Pausa</h2>
+
+        <div class="menu__botones">
+          <button class="boton" id="botonContinuar" type="button">Continuar</button>
+          <button class="boton boton--secundario" id="botonReiniciar" type="button">Reiniciar partida</button>
+          <button class="boton boton--secundario" id="botonSalir" type="button">Salir al inicio</button>
+        </div>
+
+        <details class="como-jugar">
+          <summary>Cómo jugar</summary>
+
+          <h3 class="como-jugar__titulo">Controles</h3>
+          <ul class="como-jugar__lista">
+            <li>Contra Petunia: mouse, dedo, flechas o W y S.</li>
+            <li>2 jugadores: el jugador 1 usa W y S o su mitad de la pantalla; el jugador 2 usa las flechas o su mitad.</li>
+            <li>Esc o P: pausa y abre este menú.</li>
+          </ul>
+
+          <h3 class="como-jugar__titulo">Poderes (los gana quien tocó la pelota de último)</h3>
+          <ul class="como-jugar__lista como-jugar__lista--poderes">
+            <li><span class="punto punto--mini" aria-hidden="true"></span><strong>Bola mini:</strong> la pelota se hace pequeña.</li>
+            <li><span class="punto punto--turbo" aria-hidden="true"></span><strong>Turbo:</strong> la pelota va más rápido.</li>
+            <li><span class="punto punto--multi" aria-hidden="true"></span><strong>Multibola:</strong> salen 2 pelotas extra que también cuentan puntos.</li>
+            <li><span class="punto punto--gigante" aria-hidden="true"></span><strong>Gigante:</strong> tu canasta se agranda unos segundos.</li>
+            <li><span class="punto punto--escudo" aria-hidden="true"></span><strong>Escudo:</strong> una barrera te salva de un punto.</li>
+            <li><span class="punto punto--hielo" aria-hidden="true"></span><strong>Hielo:</strong> congela al rival por un momento.</li>
+            <li><span class="punto punto--zigzag" aria-hidden="true"></span><strong>Zigzag:</strong> la pelota se mueve en zigzag.</li>
+          </ul>
+
+          <h3 class="como-jugar__titulo">Peligros</h3>
+          <p class="como-jugar__texto">Aficionados, celadores, jugadores, el señor del aseo, drones, viento y botellas pueden desviar la pelota.</p>
+
+          <h3 class="como-jugar__titulo">Rally</h3>
+          <p class="como-jugar__texto">Cada golpe seguido suma al rally y se muestra en la esquina de la cancha. Cada 10 golpes hay festejo.</p>
+        </details>
+      </div>
+    </div>
+
+    <!-- Mensajes para lectores de pantalla -->
+    <p class="solo-lector" id="anuncio" aria-live="polite"></p>
+
+  </main>
+
+  <footer class="pie">
+    <p>Contra Petunia: mouse, dedo, flechas ↑ ↓ o W y S. En 2 jugadores: jugador 1 con W y S o el lado izquierdo; jugador 2 con ↑ ↓ o el lado derecho.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
